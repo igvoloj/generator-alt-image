@@ -10,14 +10,18 @@
     "Other"
   ],
   "activationEvents": [
-    "onLanguage:html"
+    "*"
   ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "generator-alt-image.helloWorld",
-        "title": "Hello World"
+        "command": "generator-alt-image.getAlt",
+        "title": "Generate Alt Image"
+      },
+      {
+        "command": "generator-alt-image.getImage",
+        "title": "Generate Image "
       }
     ]
   },
