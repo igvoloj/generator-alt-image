@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { handleChangeText } from './utils';
+import { handleChangeText, setAltInImage, setSrcInImage } from './utils';
 
 export function activate(context: vscode.ExtensionContext) {
 	setCommands(context);
@@ -7,7 +7,6 @@ export function activate(context: vscode.ExtensionContext) {
 
 }
 
-// This method is called when your extension is deactivated
 export function deactivate() { }
 
 
@@ -18,16 +17,8 @@ function setCommands(context: vscode.ExtensionContext) {
 		getAlt: `${extensionName}.getAlt`
 	};
 	const disposables = [
-		vscode.commands.registerCommand(commands.getImage, () => {
-			console.log("logic to get image");
-
-			vscode.window.showInformationMessage('Hello World from getImage!');
-		}),
-		vscode.commands.registerCommand(commands.getAlt, () => {
-			console.log("logic to get alt");
-
-			vscode.window.showInformationMessage('Hello World from getAlt!');
-		})
+		vscode.commands.registerCommand(commands.getImage, () => setSrcInImage()),
+		vscode.commands.registerCommand(commands.getAlt, () => setAltInImage())
 	];
 
 	disposables.forEach((disposable) => context.subscriptions.push(disposable));

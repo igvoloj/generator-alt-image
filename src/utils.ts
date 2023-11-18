@@ -81,3 +81,13 @@ export function getAttributeValue(attributeValidated: RegExpMatchArray | null): 
     }
     return valueWithoutQuotes;
 }
+export function setSrcInImage() {
+    console.log("logic to get image");
+
+    vscode.window.showInformationMessage('Hello World from getImage!');
+}
+export function setAltInImage() {
+    console.log("logic to get alt");
+
+    vscode.window.showInformationMessage('Hello World from getAlt!');
+}
