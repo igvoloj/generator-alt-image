@@ -14,13 +14,25 @@ export function activate(context: vscode.ExtensionContext) {
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
 	// The commandId parameter must match the command field in package.json
-	let disposable = vscode.commands.registerCommand('generator-alt-image.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from generator-alt-image!');
-	});
+	const extensionName = "generator-alt-image";
+	const commands = {
+		getImage: `${extensionName}.getImage`,
+		getAlt: `${extensionName}.getAlt`
+	};
+	const disposables = [
+		vscode.commands.registerCommand(commands.getImage, () => {
+			console.log("logic to get image");
 
-	context.subscriptions.push(disposable);
+			vscode.window.showInformationMessage('Hello World from getImage!');
+		}),
+		vscode.commands.registerCommand(commands.getAlt, () => {
+			console.log("logic to get alt");
+
+			vscode.window.showInformationMessage('Hello World from getAlt!');
+		})
+	];
+
+	disposables.forEach((disposable) => context.subscriptions.push(disposable));
 }
 
 // This method is called when your extension is deactivated
