@@ -3,7 +3,7 @@ import { handleChangeText, setAltInImage, setSrcInImage } from './utils';
 
 export function activate(context: vscode.ExtensionContext) {
 	setCommands(context);
-	setTriggers(context);
+	setTriggers();
 
 }
 
@@ -24,6 +24,6 @@ function setCommands(context: vscode.ExtensionContext) {
 	disposables.forEach((disposable) => context.subscriptions.push(disposable));
 }
 
-function setTriggers(context: vscode.ExtensionContext) {
+function setTriggers() {
 	vscode.workspace.onDidChangeTextDocument((event) => handleChangeText(event));
 }
