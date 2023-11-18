@@ -1,45 +1,39 @@
 import * as vscode from 'vscode';
-
+let lineText = '';
+let currentCursorPosition = 0;
 export function handleChangeText(event: vscode.TextDocumentChangeEvent) {
     const tagTrigger = "<img";
-    const tagClosedRegex = /<img[^>]*>/g;
-    const altRegex = /alt="([^"]*)"/g;
-    const documentText = event.document.getText();
+    //const tagClosedRegex = /<img[^>]*>/g;
+    //const documentText = event.document.getText();
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
         return;
     }
     const { selection } = editor;
-    const currentCursorPosition = selection.active.character;
     const text = editor.document.lineAt(selection.active.line).text;
     if (!text.includes(tagTrigger)) {
         return;
     }
+    lineText = text;
+    currentCursorPosition = selection.active.character;
     /* const isClosed = documentText.match(tagClosedRegex);
     if (!isClosed) {
         return;
     } */
 
-    checkSrc(text, currentCursorPosition);
+    //checkSrc(text, currentCursorPosition);
 
 
 }
 
-export function checkSrc(text: string, currentCursorPosition: number) {
+export function checkSrc(textLine: string, currentCursorPosition: number, textToReplace: string) {
     const srcRegex = /src="([^"]*)"/g;
-    const hasSrc = text.match(srcRegex);
-    if (!hasSrc) {
-        return;
-    }
-    const srcValue = getAttributeValue(hasSrc);
-
-    /* 	const srcRange = new vscode.Range(
-            new vscode.Position(selection.active.line, text.indexOf("src")),
-            new vscode.Position(selection.active.line, text.indexOf("src") + 4)
-        ); */
-    const srcPosition = text.indexOf("src");
+    const hasSrc = textLine.match(srcRegex);
+    const srcPosition = textLine.indexOf("src");
     let toSrc = "";
     let diff = 0;
+
+    const secondQuoteIndex = textLine.indexOf('"', srcPosition + 5);
     if (currentCursorPosition > srcPosition) {
         toSrc = "left";
         diff = Math.abs(srcPosition - currentCursorPosition) - 4;
@@ -56,20 +50,45 @@ export function checkSrc(text: string, currentCursorPosition: number) {
         }
         editor.edit((editBuilder) => {
             const srcRange = new vscode.Range(
-                new vscode.Position(editor.selection.active.line, srcPosition),
-                new vscode.Position(editor.selection.active.line, srcPosition + 4)
+                new vscode.Position(editor.selection.active.line, srcPosition + 5),
+                new vscode.Position(editor.selection.active.line, secondQuoteIndex)
             );
-            editBuilder.replace(srcRange, '');
+            editBuilder.replace(srcRange, textToReplace);
         });
     }
 
 }
-/* function checkAlt(params: type) {
-//const hasAlt = text.match(altRegex);
-    //const altValue = getAttributeValue(hasAlt);
-    //const altPosition = text.indexOf("alt");
-    //const toAlt = (currentCursorPosition > altPosition) ? "left" : "right";
-} */
+function checkAlt(textLine: string, currentCursorPosition: number, textToReplace: string) {
+    const altRegex = /alt="([^"]*)"/g;
+    const hasAlt = textLine.match(altRegex);
+    const altPosition = textLine.indexOf("alt");
+    let toAlt = '';
+    let diff = 0;
+    const secondQuoteIndex = textLine.indexOf('"', altPosition + 5);
+
+    if (currentCursorPosition > altPosition) {
+        toAlt = "left";
+        diff = Math.abs(altPosition - currentCursorPosition) - 4;
+    } else {
+        toAlt = "right";
+        diff = Math.abs(altPosition - currentCursorPosition) + 4;
+    }
+
+    if (currentCursorPosition !== altPosition) {
+        vscode.commands.executeCommand("cursorMove", { to: toAlt, by: "character", value: diff });
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            return;
+        }
+        editor.edit((editBuilder) => {
+            const srcRange = new vscode.Range(
+                new vscode.Position(editor.selection.active.line, altPosition + 5),
+                new vscode.Position(editor.selection.active.line, secondQuoteIndex)
+            );
+            editBuilder.replace(srcRange, textToReplace);
+        });
+    }
+}
 export function getAttributeValue(attributeValidated: RegExpMatchArray | null): string | null {
     if (!attributeValidated) {
         return null;
@@ -82,12 +101,10 @@ export function getAttributeValue(attributeValidated: RegExpMatchArray | null): 
     return valueWithoutQuotes;
 }
 export function setSrcInImage() {
-    console.log("logic to get image");
-
-    vscode.window.showInformationMessage('Hello World from getImage!');
+    const src = "mockedSRC";
+    checkSrc(lineText, currentCursorPosition, src);
 }
 export function setAltInImage() {
-    console.log("logic to get alt");
-
-    vscode.window.showInformationMessage('Hello World from getAlt!');
+    const alt = "mockedAlt";
+    checkAlt(lineText, currentCursorPosition, alt);
 }
