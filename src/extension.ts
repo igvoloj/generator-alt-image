@@ -1,13 +1,11 @@
 import * as vscode from 'vscode';
-import { handleChangeText } from './utils';
+import { createFolderImageInRoot, handleChangeText, setAltInImage, setSrcInImage } from './utils';
 
 export function activate(context: vscode.ExtensionContext) {
 	setCommands(context);
-	setTriggers(context);
-
+	setTriggers();
 }
 
-// This method is called when your extension is deactivated
 export function deactivate() { }
 
 
@@ -15,24 +13,18 @@ function setCommands(context: vscode.ExtensionContext) {
 	const extensionName = "generator-alt-image";
 	const commands = {
 		getImage: `${extensionName}.getImage`,
-		getAlt: `${extensionName}.getAlt`
+		getAlt: `${extensionName}.getAlt`,
+		createImageFolder: `${extensionName}.createImageFolder`,
 	};
 	const disposables = [
-		vscode.commands.registerCommand(commands.getImage, () => {
-			console.log("logic to get image");
-
-			vscode.window.showInformationMessage('Hello World from getImage!');
-		}),
-		vscode.commands.registerCommand(commands.getAlt, () => {
-			console.log("logic to get alt");
-
-			vscode.window.showInformationMessage('Hello World from getAlt!');
-		})
+		vscode.commands.registerCommand(commands.getImage, () => setSrcInImage()),
+		vscode.commands.registerCommand(commands.getAlt, () => setAltInImage()),
+		vscode.commands.registerCommand(commands.createImageFolder, () => createFolderImageInRoot()),
 	];
 
 	disposables.forEach((disposable) => context.subscriptions.push(disposable));
 }
 
-function setTriggers(context: vscode.ExtensionContext) {
+function setTriggers() {
 	vscode.workspace.onDidChangeTextDocument((event) => handleChangeText(event));
 }
