@@ -1,12 +1,13 @@
 import * as vscode from 'vscode';
+import fs from 'fs';
+import path from 'path';
 let lineText = '';
 let currentCursorPosition = 0;
 export function handleChangeText(event: vscode.TextDocumentChangeEvent) {
     const tagTrigger = "<img";
-    //const tagClosedRegex = /<img[^>]*>/g;
-    //const documentText = event.document.getText();
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
+        vscode.window.showInformationMessage('Open a file first to manipulate text selection');
         return;
     }
     const { selection } = editor;
@@ -16,78 +17,15 @@ export function handleChangeText(event: vscode.TextDocumentChangeEvent) {
     }
     lineText = text;
     currentCursorPosition = selection.active.character;
-    /* const isClosed = documentText.match(tagClosedRegex);
-    if (!isClosed) {
-        return;
-    } */
-
-    //checkSrc(text, currentCursorPosition);
-
-
 }
 
 export function checkSrc(textLine: string, currentCursorPosition: number, textToReplace: string) {
-    const srcRegex = /src="([^"]*)"/g;
-    const hasSrc = textLine.match(srcRegex);
     const srcPosition = textLine.indexOf("src");
-    let toSrc = "";
-    let diff = 0;
-
-    const secondQuoteIndex = textLine.indexOf('"', srcPosition + 5);
-    if (currentCursorPosition > srcPosition) {
-        toSrc = "left";
-        diff = Math.abs(srcPosition - currentCursorPosition) - 4;
-    } else {
-        toSrc = "right";
-        diff = Math.abs(srcPosition - currentCursorPosition) + 4;
-    }
-
-    if (currentCursorPosition !== srcPosition) {
-        vscode.commands.executeCommand("cursorMove", { to: toSrc, by: "character", value: diff });
-        const editor = vscode.window.activeTextEditor;
-        if (!editor) {
-            return;
-        }
-        editor.edit((editBuilder) => {
-            const srcRange = new vscode.Range(
-                new vscode.Position(editor.selection.active.line, srcPosition + 5),
-                new vscode.Position(editor.selection.active.line, secondQuoteIndex)
-            );
-            editBuilder.replace(srcRange, textToReplace);
-        });
-    }
-
+    checkAttribute(textLine, currentCursorPosition, textToReplace, srcPosition);
 }
-function checkAlt(textLine: string, currentCursorPosition: number, textToReplace: string) {
-    const altRegex = /alt="([^"]*)"/g;
-    const hasAlt = textLine.match(altRegex);
+export function checkAlt(textLine: string, currentCursorPosition: number, textToReplace: string) {
     const altPosition = textLine.indexOf("alt");
-    let toAlt = '';
-    let diff = 0;
-    const secondQuoteIndex = textLine.indexOf('"', altPosition + 5);
-
-    if (currentCursorPosition > altPosition) {
-        toAlt = "left";
-        diff = Math.abs(altPosition - currentCursorPosition) - 4;
-    } else {
-        toAlt = "right";
-        diff = Math.abs(altPosition - currentCursorPosition) + 4;
-    }
-
-    if (currentCursorPosition !== altPosition) {
-        vscode.commands.executeCommand("cursorMove", { to: toAlt, by: "character", value: diff });
-        const editor = vscode.window.activeTextEditor;
-        if (!editor) {
-            return;
-        }
-        editor.edit((editBuilder) => {
-            const srcRange = new vscode.Range(
-                new vscode.Position(editor.selection.active.line, altPosition + 5),
-                new vscode.Position(editor.selection.active.line, secondQuoteIndex)
-            );
-            editBuilder.replace(srcRange, textToReplace);
-        });
-    }
+    checkAttribute(textLine, currentCursorPosition, textToReplace, altPosition);
 }
 export function getAttributeValue(attributeValidated: RegExpMatchArray | null): string | null {
     if (!attributeValidated) {
@@ -100,6 +38,34 @@ export function getAttributeValue(attributeValidated: RegExpMatchArray | null): 
     }
     return valueWithoutQuotes;
 }
+export function checkAttribute(textLine: string, currentCursorPosition: number, textToReplace: string, attributePosition: number) {
+    let toSrc = "";
+    let diff = 0;
+    const secondQuoteIndex = textLine.indexOf('"', attributePosition + 5);
+    if (currentCursorPosition > attributePosition) {
+        toSrc = "left";
+        diff = Math.abs(attributePosition - currentCursorPosition) - 4;
+    } else {
+        toSrc = "right";
+        diff = Math.abs(attributePosition - currentCursorPosition) + 4;
+    }
+
+    if (currentCursorPosition === attributePosition) {
+        return;
+    }
+    vscode.commands.executeCommand("cursorMove", { to: toSrc, by: "character", value: diff });
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+        return;
+    }
+    editor.edit((editBuilder) => {
+        const srcRange = new vscode.Range(
+            new vscode.Position(editor.selection.active.line, attributePosition + 5),
+            new vscode.Position(editor.selection.active.line, secondQuoteIndex)
+        );
+        editBuilder.replace(srcRange, textToReplace);
+    });
+}
 export function setSrcInImage() {
     const src = "mockedSRC";
     checkSrc(lineText, currentCursorPosition, src);
@@ -107,4 +73,23 @@ export function setSrcInImage() {
 export function setAltInImage() {
     const alt = "mockedAlt";
     checkAlt(lineText, currentCursorPosition, alt);
+}
+export async function createFolderImageInRoot() {
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (!workspaceFolders) {
+        vscode.window.showInformationMessage('Open a folder first to create image folder');
+        return;
+    }
+    const rootFolder = workspaceFolders[0].uri.fsPath;
+    const folderImagesName = "images";
+    const folderPublicName = "public";
+    const folderPublicPath = path.join(rootFolder, folderPublicName);
+    const folderImagePublicPath = path.join(folderPublicPath, folderImagesName);
+    if (fs.existsSync(folderImagePublicPath)) {
+        vscode.window.showInformationMessage('Folder already exists');
+        return;
+    }
+    fs.mkdirSync(folderPublicPath);
+    fs.mkdirSync(folderImagePublicPath);
+    vscode.window.showInformationMessage('Folder created');
 }
